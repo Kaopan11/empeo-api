@@ -5,6 +5,22 @@ export interface Employee {
   department: string;
 }
 
+export type EvaluationStatus = "PENDING" | "DRAFT" | "SUBMITTED";
+
+export interface TeamMember {
+  userId: string;
+  name: string;
+  email: string;
+  department: string;
+  evaluationId: string | null;
+  status: EvaluationStatus;
+}
+
+export interface TeamEvaluations {
+  cycle: { id: string; name: string };
+  members: TeamMember[];
+}
+
 export interface Review {
   id: string;
   employee_id: string;
