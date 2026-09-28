@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import { supabase } from "./lib/supabase";
+import { writeEvaluation } from "./evaluations";
 import { buildTeamMembers, managerIdFromQuery } from "./team";
 import type { Employee, TeamEvaluations } from "./types";
 
@@ -8,6 +9,7 @@ const app = express();
 const port = 4000;
 
 app.use(cors());
+app.use(express.json());
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
@@ -97,6 +99,36 @@ app.get("/api/evaluations/team", async (req, res) => {
     members: built.members,
   };
   res.json(body);
+});
+
+app.post("/api/evaluations/:id/save", async (req, res) => {
+  const id = req.params.id;
+  const result = await writeEvaluation(
+    supabase,
+    typeof id === "string" ? id : "",
+    req.body,
+    "save",
+  );
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error });
+    return;
+  }
+  res.json(result.data);
+});
+
+app.post("/api/evaluations/:id/submit", async (req, res) => {
+  const id = req.params.id;
+  const result = await writeEvaluation(
+    supabase,
+    typeof id === "string" ? id : "",
+    req.body,
+    "submit",
+  );
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error });
+    return;
+  }
+  res.json(result.data);
 });
 
 app.listen(port, () => {
