@@ -70,6 +70,16 @@ export async function writeEvaluation(
   if (evaluation.status === "SUBMITTED") {
     return { ok: false, status: 409, error: "Evaluation already submitted" };
   }
+  if (evaluation.status === "OVERDUE") {
+    return {
+      ok: false,
+      status: 409,
+      error: "Evaluation is overdue; contact HR",
+    };
+  }
+  if (evaluation.status !== "PENDING" && evaluation.status !== "DRAFT") {
+    return { ok: false, status: 500, error: "Unexpected evaluation status" };
+  }
 
   const rawCycle = evaluation.review_cycles as
     | { status: string }

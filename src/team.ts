@@ -1,7 +1,14 @@
-import type { TeamMember } from "./types";
+import type { EvaluationStatus, TeamMember } from "./types";
 
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const TEAM_STATUSES: EvaluationStatus[] = [
+  "PENDING",
+  "DRAFT",
+  "SUBMITTED",
+  "OVERDUE",
+];
 
 export function managerIdFromQuery(value: unknown): string | null {
   return typeof value === "string" && UUID.test(value) ? value : null;
@@ -18,6 +25,10 @@ export interface EvaluationRow {
   id: string;
   reviewee_id: string;
   status: string;
+}
+
+function isTeamStatus(status: string): status is EvaluationStatus {
+  return (TEAM_STATUSES as string[]).includes(status);
 }
 
 export function buildTeamMembers(
@@ -39,17 +50,12 @@ export function buildTeamMembers(
     }
     const row = rows[0];
     if (!row) {
-      members.push({
-        userId: report.id,
-        name: report.name,
-        email: report.email,
-        department: report.department,
-        evaluationId: null,
-        status: "PENDING",
-      });
-      continue;
+      return {
+        ok: false,
+        error: `Missing evaluation for direct report ${report.id}`,
+      };
     }
-    if (row.status !== "DRAFT" && row.status !== "SUBMITTED") {
+    if (!isTeamStatus(row.status)) {
       return { ok: false, error: `Unexpected evaluation status for ${report.id}` };
     }
     members.push({
