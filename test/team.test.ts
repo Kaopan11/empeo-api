@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buildTeamMembers, managerIdFromQuery } from "../src/team";
+import { managerIdFromQuery } from "../src/domain/ids";
+import { buildTeamMembers } from "../src/domain/team";
 
 const alice = {
   id: "a1000000-0000-4000-8000-000000000011",

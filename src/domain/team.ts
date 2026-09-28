@@ -1,7 +1,4 @@
-import type { EvaluationStatus, TeamMember } from "./types";
-
-const UUID =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import type { EvaluationStatus, TeamMember } from "../types";
 
 const TEAM_STATUSES: EvaluationStatus[] = [
   "PENDING",
@@ -9,10 +6,6 @@ const TEAM_STATUSES: EvaluationStatus[] = [
   "SUBMITTED",
   "OVERDUE",
 ];
-
-export function managerIdFromQuery(value: unknown): string | null {
-  return typeof value === "string" && UUID.test(value) ? value : null;
-}
 
 export interface ReportRow {
   id: string;
