@@ -8,7 +8,7 @@ import {
   teamZ,
   tierFromZ,
   type SubmittedRow,
-} from "../src/fairness";
+} from "../src/domain/fairness";
 
 describe("populationMean", () => {
   it("returns null for empty input", () => {

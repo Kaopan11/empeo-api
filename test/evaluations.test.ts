@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import {
-  evaluationIdFromParam,
-  scoreRows,
-  totalRawScore,
-} from "../src/evaluations";
+import { evaluationIdFromParam } from "../src/domain/ids";
+import { scoreRows, totalRawScore } from "../src/domain/evaluation-scores";
 
 describe("evaluationIdFromParam", () => {
   it("accepts a UUID", () => {

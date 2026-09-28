@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { draftEvaluationSchema, evaluationSchema, isLenient } from "../src/evaluation-form";
+import { draftEvaluationSchema, evaluationSchema, isLenient } from "../src/types/evaluation-schema";
 
 describe("evaluation form schemas", () => {
   it("5 and 5 is lenient and needs feedback on submit", () => {
