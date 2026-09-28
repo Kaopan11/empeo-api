@@ -21,6 +21,19 @@ export interface TeamEvaluations {
   members: TeamMember[];
 }
 
+export interface EvaluationWriteBody {
+  technical: string;
+  collaboration: string;
+  feedback: string;
+}
+
+export interface EvaluationWriteResponse {
+  id: string;
+  status: "DRAFT" | "SUBMITTED";
+  totalRawScore: number;
+  submittedAt: string | null;
+}
+
 export interface Review {
   id: string;
   employee_id: string;

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn src/app.ts",
-    "test": "node --require ts-node/register/transpile-only --test test/team.test.ts"
+    "test": "node --require ts-node/register/transpile-only --test test/**/*.test.ts"
   },
   "keywords": [],
   "type": "commonjs",
