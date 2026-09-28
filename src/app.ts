@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import { supabase } from "./lib/supabase";
+import { cycleIdFromParam } from "./fairness";
 import { writeEvaluation } from "./evaluations";
 import { buildTeamMembers, managerIdFromQuery } from "./team";
 import type { Employee, TeamEvaluations } from "./types";
@@ -99,6 +100,39 @@ app.get("/api/evaluations/team", async (req, res) => {
     members: built.members,
   };
   res.json(body);
+});
+
+app.get("/api/cycles/:cycleId/manager-metrics", async (req, res) => {
+  const cycleId = cycleIdFromParam(
+    typeof req.params.cycleId === "string" ? req.params.cycleId : "",
+  );
+  if (!cycleId) {
+    res.status(400).json({ error: "cycleId must be a UUID" });
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("manager_cycle_metrics")
+    .select("manager_id, bias_index, updated_at")
+    .eq("cycle_id", cycleId)
+    .overrideTypes<
+      { manager_id: string; bias_index: number | null; updated_at: string }[],
+      { merge: false }
+    >();
+
+  if (error) {
+    res.status(500).json({ error: error.message });
+    return;
+  }
+
+  res.json({
+    cycleId,
+    managers: (data ?? []).map((row) => ({
+      managerId: row.manager_id,
+      biasIndex: row.bias_index,
+      updatedAt: row.updated_at,
+    })),
+  });
 });
 
 app.post("/api/evaluations/:id/save", async (req, res) => {

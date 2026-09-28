@@ -4,6 +4,7 @@ import {
   evaluationSchema,
   type EvaluationWriteInput,
 } from "./evaluation-form";
+import { recalculateFairnessForCycle } from "./fairness";
 import type { EvaluationWriteResponse } from "./types";
 
 const UUID =
@@ -129,6 +130,16 @@ export async function writeEvaluation(
     .eq("id", id);
   if (updateError) {
     return { ok: false, status: 500, error: updateError.message };
+  }
+
+  if (mode === "submit") {
+    const fairness = await recalculateFairnessForCycle(
+      supabase,
+      evaluation.cycle_id,
+    );
+    if (!fairness.ok) {
+      return { ok: false, status: 500, error: fairness.error };
+    }
   }
 
   return {
