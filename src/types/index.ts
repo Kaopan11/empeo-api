@@ -5,7 +5,7 @@ export interface Employee {
   department: string;
 }
 
-export type EvaluationStatus = "PENDING" | "DRAFT" | "SUBMITTED";
+export type EvaluationStatus = "PENDING" | "DRAFT" | "SUBMITTED" | "OVERDUE";
 
 export interface TeamMember {
   userId: string;

@@ -14,6 +14,12 @@ const ben = {
   email: "ben@empeo.test",
   department: "Engineering",
 };
+const hiro = {
+  id: "a1000000-0000-4000-8000-000000000018",
+  name: "Hiro",
+  email: "hiro@empeo.test",
+  department: "Engineering",
+};
 
 describe("managerIdFromQuery", () => {
   it("rejects a missing or non-UUID managerId", () => {
@@ -32,29 +38,18 @@ describe("managerIdFromQuery", () => {
 });
 
 describe("buildTeamMembers", () => {
-  it("marks a direct report with no evaluation as PENDING", () => {
+  it("fails when a direct report has no evaluation row", () => {
     const result = buildTeamMembers([alice], []);
-    assert.deepEqual(result, {
-      ok: true,
-      members: [
-        {
-          userId: alice.id,
-          name: "Alice",
-          email: "alice@empeo.test",
-          department: "Engineering",
-          evaluationId: null,
-          status: "PENDING",
-        },
-      ],
-    });
+    assert.equal(result.ok, false);
   });
 
-  it("returns DRAFT or SUBMITTED from the single matching evaluation", () => {
+  it("returns status from the database row", () => {
     const result = buildTeamMembers(
-      [ben, alice],
+      [ben, alice, hiro],
       [
         { id: "c1", reviewee_id: alice.id, status: "SUBMITTED" },
         { id: "c2", reviewee_id: ben.id, status: "DRAFT" },
+        { id: "c3", reviewee_id: hiro.id, status: "PENDING" },
       ],
     );
     assert.equal(result.ok, true);
@@ -64,8 +59,18 @@ describe("buildTeamMembers", () => {
       [
         ["Alice", "c1", "SUBMITTED"],
         ["Ben", "c2", "DRAFT"],
+        ["Hiro", "c3", "PENDING"],
       ],
     );
+  });
+
+  it("includes OVERDUE from the database row", () => {
+    const result = buildTeamMembers([alice], [
+      { id: "c1", reviewee_id: alice.id, status: "OVERDUE" },
+    ]);
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.equal(result.members[0]?.status, "OVERDUE");
   });
 
   it("fails when one person has two evaluations or an unknown status", () => {
