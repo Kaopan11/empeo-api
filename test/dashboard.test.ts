@@ -73,7 +73,13 @@ describe("buildDashboard", () => {
       },
     ];
     const result = buildDashboard({
-      cycle: { id: "c1", name: "H2", endDate: "2026-10-02" },
+      cycle: {
+        id: "c1",
+        name: "H2",
+        endDate: "2026-10-02",
+        status: "IN_PROGRESS",
+        publishedAt: null,
+      },
       evaluations,
       users,
       managerMetrics: [

@@ -2,7 +2,7 @@ import { buildTeamMembers } from "../domain/team";
 import { managerIdFromQuery } from "../domain/ids";
 import {
   findDirectReports,
-  findInProgressCycles,
+  findOpenCycles,
   findManagerEvaluations,
   findUserById,
 } from "../repositories/team.repository";
@@ -28,7 +28,7 @@ export async function getTeamEvaluations(
     return { ok: false, status: 500, error: manager.error };
   }
 
-  const cycles = await findInProgressCycles();
+  const cycles = await findOpenCycles();
   if (!cycles.ok) {
     return { ok: false, status: 500, error: cycles.error };
   }
@@ -36,7 +36,7 @@ export async function getTeamEvaluations(
     return {
       ok: false,
       status: 409,
-      error: "Expected exactly one in-progress review cycle",
+      error: "Expected exactly one open review cycle",
     };
   }
   const cycle = cycles.data[0];
@@ -44,7 +44,7 @@ export async function getTeamEvaluations(
     return {
       ok: false,
       status: 409,
-      error: "Expected exactly one in-progress review cycle",
+      error: "Expected exactly one open review cycle",
     };
   }
 
