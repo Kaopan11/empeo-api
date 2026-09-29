@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { listEmployees } from "../repositories/employees.repository";
+import { getCycleDashboard } from "../services/dashboard.service";
+import { resolveOverdueEvaluations, writeEvaluation } from "../services/evaluations.service";
 import { getManagerCycleMetrics } from "../services/fairness.service";
-import { writeEvaluation } from "../services/evaluations.service";
 import { getTeamEvaluations } from "../services/team.service";
 
 export function registerRoutes(app: Express) {
@@ -20,6 +21,26 @@ export function registerRoutes(app: Express) {
 
   app.get("/api/evaluations/team", async (req, res) => {
     const result = await getTeamEvaluations(req.query.managerId);
+    if (!result.ok) {
+      res.status(result.status).json({ error: result.error });
+      return;
+    }
+    res.json(result.data);
+  });
+
+  app.get("/api/cycles/:cycleId/dashboard", async (req, res) => {
+    const cycleId = typeof req.params.cycleId === "string" ? req.params.cycleId : "";
+    const result = await getCycleDashboard(cycleId);
+    if (!result.ok) {
+      res.status(result.status).json({ error: result.error });
+      return;
+    }
+    res.json(result.data);
+  });
+
+  app.post("/api/cycles/:cycleId/resolve-overdue", async (req, res) => {
+    const cycleId = typeof req.params.cycleId === "string" ? req.params.cycleId : "";
+    const result = await resolveOverdueEvaluations(cycleId);
     if (!result.ok) {
       res.status(result.status).json({ error: result.error });
       return;

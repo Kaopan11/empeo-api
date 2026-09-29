@@ -78,7 +78,7 @@ export async function updateEvaluationStatus(
   evaluationId: string,
   update: {
     status: string;
-    total_raw_score: number;
+    total_raw_score?: number | null;
     submitted_at: string | null;
   },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -87,4 +87,59 @@ export async function updateEvaluationStatus(
     return { ok: false, error: error.message };
   }
   return { ok: true };
+}
+
+export async function listOverdueEvaluations(cycleId: string): Promise<
+  | {
+      ok: true;
+      data: {
+        id: string;
+        totalRawScore: number | null;
+        scores: { criteria_name: string; score: number; feedback: string | null }[];
+      }[];
+    }
+  | { ok: false; error: string }
+> {
+  const { data: evaluations, error } = await supabase
+    .from("evaluations")
+    .select("id, total_raw_score")
+    .eq("cycle_id", cycleId)
+    .eq("status", "OVERDUE");
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+  const rows = evaluations ?? [];
+  if (rows.length === 0) {
+    return { ok: true, data: [] };
+  }
+  const ids = rows.map((row) => String(row.id));
+  const { data: scores, error: scoreError } = await supabase
+    .from("evaluation_scores")
+    .select("evaluation_id, criteria_name, score, feedback")
+    .in("evaluation_id", ids);
+  if (scoreError) {
+    return { ok: false, error: scoreError.message };
+  }
+  const byEval = new Map<
+    string,
+    { criteria_name: string; score: number; feedback: string | null }[]
+  >();
+  for (const score of scores ?? []) {
+    const id = String(score.evaluation_id);
+    const list = byEval.get(id) ?? [];
+    list.push({
+      criteria_name: String(score.criteria_name),
+      score: Number(score.score),
+      feedback: score.feedback == null ? null : String(score.feedback),
+    });
+    byEval.set(id, list);
+  }
+  return {
+    ok: true,
+    data: rows.map((row) => ({
+      id: String(row.id),
+      totalRawScore: row.total_raw_score == null ? null : Number(row.total_raw_score),
+      scores: byEval.get(String(row.id)) ?? [],
+    })),
+  };
 }
