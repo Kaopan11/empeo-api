@@ -14,14 +14,14 @@ export async function findUserById(
   return { ok: true };
 }
 
-export async function findInProgressCycles(): Promise<
+export async function findOpenCycles(): Promise<
   | { ok: true; data: { id: string; name: string }[] }
   | { ok: false; error: string }
 > {
   const { data, error } = await supabase
     .from("review_cycles")
     .select("id, name")
-    .eq("status", "IN_PROGRESS")
+    .in("status", ["IN_PROGRESS", "PUBLISHED"])
     .overrideTypes<{ id: string; name: string }[], { merge: false }>();
   if (error) {
     return { ok: false, error: error.message };

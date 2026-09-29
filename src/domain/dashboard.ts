@@ -33,7 +33,7 @@ export interface DashboardManagerMetric {
 }
 
 export interface DashboardInput {
-  cycle: { id: string; name: string; endDate: string };
+  cycle: { id: string; name: string; endDate: string; status: string; publishedAt: string | null };
   evaluations: DashboardEvaluation[];
   users: DashboardUser[];
   managerMetrics: DashboardManagerMetric[];
@@ -132,6 +132,8 @@ export function buildDashboard(input: DashboardInput) {
       id: input.cycle.id,
       name: input.cycle.name,
       endDate: input.cycle.endDate,
+      status: input.cycle.status,
+      publishedAt: input.cycle.publishedAt,
     },
     kpis: {
       totalEmployees,

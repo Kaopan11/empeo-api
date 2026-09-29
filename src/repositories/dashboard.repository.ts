@@ -21,7 +21,7 @@ export async function loadCycleDashboard(cycleId: string): Promise<
   | {
       ok: true;
       data: {
-        cycle: { id: string; name: string; endDate: string };
+        cycle: { id: string; name: string; endDate: string; status: string; publishedAt: string | null };
         evaluations: DashboardEvaluation[];
         users: DashboardUser[];
         managerMetrics: { managerId: string; biasIndex: number | null }[];
@@ -32,7 +32,7 @@ export async function loadCycleDashboard(cycleId: string): Promise<
 > {
   const { data: cycle, error: cycleError } = await supabase
     .from("review_cycles")
-    .select("id, name, end_date")
+    .select("id, name, end_date, status, published_at")
     .eq("id", cycleId)
     .maybeSingle();
   if (cycleError) {
@@ -91,6 +91,8 @@ export async function loadCycleDashboard(cycleId: string): Promise<
         id: String(cycle.id),
         name: String(cycle.name),
         endDate: String(cycle.end_date),
+        status: String(cycle.status),
+        publishedAt: cycle.published_at == null ? null : String(cycle.published_at),
       },
       evaluations: mapped,
       users: (users ?? []).map((user) => ({
