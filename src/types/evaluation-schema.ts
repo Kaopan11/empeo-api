@@ -32,3 +32,15 @@ export function isLenient(value: {
 }) {
   return value.technical === "5" && value.collaboration === "5";
 }
+
+export function overdueResolution(
+  technical: string,
+  collaboration: string,
+  feedback: string,
+): "submit" | "unlock" {
+  const body = { technical, collaboration, feedback };
+  if (!draftEvaluationSchema.safeParse(body).success) {
+    return "unlock";
+  }
+  return evaluationSchema.safeParse(body).success ? "submit" : "unlock";
+}

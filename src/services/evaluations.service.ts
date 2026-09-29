@@ -1,7 +1,8 @@
 import { totalRawScore } from "../domain/evaluation-scores";
-import { evaluationIdFromParam } from "../domain/ids";
+import { cycleIdFromParam, evaluationIdFromParam } from "../domain/ids";
 import {
   findEvaluationForWrite,
+  listOverdueEvaluations,
   replaceEvaluationScores,
   updateEvaluationStatus,
 } from "../repositories/evaluations.repository";
@@ -9,6 +10,7 @@ import { persistFairnessForCycle } from "../repositories/fairness.repository";
 import {
   draftEvaluationSchema,
   evaluationSchema,
+  overdueResolution,
   type EvaluationWriteInput,
 } from "../types/evaluation-schema";
 import type { EvaluationWriteResponse } from "../types";
@@ -94,4 +96,78 @@ export async function writeEvaluation(
       submittedAt,
     },
   };
+}
+
+function scoresToInput(
+  scores: { criteria_name: string; score: number; feedback: string | null }[],
+): { technical: string; collaboration: string; feedback: string } {
+  let technical = "";
+  let collaboration = "";
+  let feedback = "";
+  for (const row of scores) {
+    if (row.criteria_name === "Technical Execution") {
+      technical = String(row.score);
+    }
+    if (row.criteria_name === "Collaboration") {
+      collaboration = String(row.score);
+    }
+    if (row.feedback?.trim()) {
+      feedback = row.feedback;
+    }
+  }
+  return { technical, collaboration, feedback };
+}
+
+export async function resolveOverdueEvaluations(
+  cycleIdParam: string,
+): Promise<
+  | { ok: true; data: { unlocked: number; submitted: number } }
+  | { ok: false; status: number; error: string }
+> {
+  const cycleId = cycleIdFromParam(cycleIdParam);
+  if (!cycleId) {
+    return { ok: false, status: 400, error: "cycleId must be a UUID" };
+  }
+
+  const listed = await listOverdueEvaluations(cycleId);
+  if (!listed.ok) {
+    return { ok: false, status: 500, error: listed.error };
+  }
+
+  let unlocked = 0;
+  let submitted = 0;
+  for (const row of listed.data) {
+    const input = scoresToInput(row.scores);
+    const action = overdueResolution(input.technical, input.collaboration, input.feedback);
+    if (action === "submit") {
+      const total = totalRawScore(input.technical, input.collaboration);
+      const updated = await updateEvaluationStatus(row.id, {
+        status: "SUBMITTED",
+        total_raw_score: total,
+        submitted_at: new Date().toISOString(),
+      });
+      if (!updated.ok) {
+        return { ok: false, status: 500, error: updated.error };
+      }
+      submitted += 1;
+    } else {
+      const updated = await updateEvaluationStatus(row.id, {
+        status: "DRAFT",
+        submitted_at: null,
+      });
+      if (!updated.ok) {
+        return { ok: false, status: 500, error: updated.error };
+      }
+      unlocked += 1;
+    }
+  }
+
+  if (submitted > 0) {
+    const fairness = await persistFairnessForCycle(cycleId);
+    if (!fairness.ok) {
+      return { ok: false, status: 500, error: fairness.error };
+    }
+  }
+
+  return { ok: true, data: { unlocked, submitted } };
 }
